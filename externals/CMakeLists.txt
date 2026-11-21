@@ -14,6 +14,9 @@ if (NOT TARGET cryptopp::cryptopp)
     # so disable extensions in the library config to match our chosen target CPU.
     set(CRYPTOPP_DISABLE_AESNI ON)
     set(CRYPTOPP_DISABLE_AVX2 ON)
+    if (MSVC)
+        set(CRYPTOPP_DISABLE_ASM ON)
+    endif()
     add_subdirectory(cryptopp-cmake)
     file(COPY cryptopp DESTINATION cryptopp FILES_MATCHING PATTERN "*.h")
     # remove externals/cryptopp from include directories because it contains a conflicting zlib.h file

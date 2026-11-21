@@ -11,7 +11,7 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-project(PKGInstall VERSION 1.0.0 LANGUAGES CXX)
+project(PKGInstall VERSION 1.0.0 LANGUAGES C CXX)
 
 if(APPLE)
     enable_language(OBJC)

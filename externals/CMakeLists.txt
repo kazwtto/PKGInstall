@@ -71,6 +71,15 @@ endif()
 
 # zarchive
 if (NOT TARGET zarchive AND NOT TARGET ZArchive::zarchive)
-    set(BUILD_STATIC_TOOL OFF CACHE BOOL "" FORCE)
-    add_subdirectory(zarchive EXCLUDE_FROM_ALL)
+    add_library(zarchive STATIC
+        zarchive/src/zarchivewriter.cpp
+        zarchive/src/zarchivereader.cpp
+        zarchive/src/sha_256.c
+    )
+    add_library(ZArchive::zarchive ALIAS zarchive)
+    target_compile_features(zarchive PUBLIC cxx_std_20)
+    target_include_directories(zarchive PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/zarchive/include
+    )
+    target_link_libraries(zarchive PRIVATE zstd::zstd)
 endif()

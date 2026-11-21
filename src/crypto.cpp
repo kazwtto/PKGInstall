@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <algorithm>
 #include <array>
+#include <cstring>
 
 #include "crypto.h"
 
@@ -69,27 +71,31 @@ CryptoPP::RSA::PrivateKey Crypto::DebugRifKeyset_init() {
     return privateKey;
 }
 
-void Crypto::RSA2048Decrypt(std::span<CryptoPP::byte, 32> dec_key,
+bool Crypto::RSA2048Decrypt(std::span<CryptoPP::byte, 32> dec_key,
                             std::span<const CryptoPP::byte, 256> ciphertext,
                             bool is_dk3) { // RSAES_PKCS1v15_
-    // Create an RSA decryptor
-    CryptoPP::RSA::PrivateKey privateKey;
-    if (is_dk3) {
-        privateKey = key_pkg_derived_key3_keyset_init();
-    } else {
-        privateKey = FakeKeyset_keyset_init();
-    }
+    static const CryptoPP::RSA::PrivateKey dk3Key = key_pkg_derived_key3_keyset_init();
+    static const CryptoPP::RSA::PrivateKey fakeKey = FakeKeyset_keyset_init();
+    const CryptoPP::RSA::PrivateKey& privateKey = is_dk3 ? dk3Key : fakeKey;
 
     CryptoPP::RSAES_PKCS1v15_Decryptor rsaDecryptor(privateKey);
 
-    // Allocate memory for the decrypted data
-    std::array<CryptoPP::byte, 256> decrypted;
+    std::array<CryptoPP::byte, 256> decrypted{};
 
-    // Perform the decryption
     CryptoPP::AutoSeededRandomPool rng;
-    CryptoPP::DecodingResult result =
-        rsaDecryptor.Decrypt(rng, ciphertext.data(), decrypted.size(), decrypted.data());
-    std::copy(decrypted.begin(), decrypted.begin() + dec_key.size(), dec_key.begin());
+    const CryptoPP::DecodingResult result =
+        rsaDecryptor.Decrypt(rng, ciphertext.data(), ciphertext.size(), decrypted.data());
+    if (!result.isValidCoding) {
+        std::fill(dec_key.begin(), dec_key.end(), 0);
+        return false;
+    }
+
+    const size_t copyLen = std::min(result.messageLength, dec_key.size());
+    std::copy_n(decrypted.begin(), copyLen, dec_key.begin());
+    if (copyLen < dec_key.size()) {
+        std::fill(dec_key.begin() + copyLen, dec_key.end(), 0);
+    }
+    return true;
 }
 
 void Crypto::ivKeyHASH256(std::span<const CryptoPP::byte, 64> cipher_input,
@@ -132,9 +138,20 @@ void Crypto::aesCbcCfb128DecryptEntry(std::span<const CryptoPP::byte, 32> ivkey,
     CryptoPP::AES::Decryption aesDecryption(key.data(), CryptoPP::AES::DEFAULT_KEYLENGTH);
     CryptoPP::CBC_Mode_ExternalCipher::Decryption cbcDecryption(aesDecryption, iv.data());
 
-    for (size_t i = 0; i < decrypted.size(); i += CryptoPP::AES::BLOCKSIZE) {
+    const size_t total = std::min(ciphertext.size(), decrypted.size());
+    const size_t alignedTotal = (total / CryptoPP::AES::BLOCKSIZE) * CryptoPP::AES::BLOCKSIZE;
+    for (size_t i = 0; i < alignedTotal; i += CryptoPP::AES::BLOCKSIZE) {
         cbcDecryption.ProcessData(decrypted.data() + i, ciphertext.data() + i,
                                   CryptoPP::AES::BLOCKSIZE);
+    }
+
+    const size_t rem = total - alignedTotal;
+    if (rem > 0) {
+        std::array<CryptoPP::byte, CryptoPP::AES::BLOCKSIZE> inBlock{};
+        std::array<CryptoPP::byte, CryptoPP::AES::BLOCKSIZE> outBlock{};
+        std::copy_n(ciphertext.data() + alignedTotal, rem, inBlock.data());
+        cbcDecryption.ProcessData(outBlock.data(), inBlock.data(), CryptoPP::AES::BLOCKSIZE);
+        std::copy_n(outBlock.data(), rem, decrypted.data() + alignedTotal);
     }
 }
 
@@ -169,17 +186,17 @@ void Crypto::PfsGenCryptoKey(std::span<const CryptoPP::byte, 32> ekpfs,
 
     CryptoPP::SecByteBlock d(20); // Use Crypto++ SecByteBlock for better memory management
 
-    // Copy the bytes of 'index' to the 'd' array
-    uint32_t index = 1;
-    std::memcpy(d, &index, sizeof(uint32_t));
+    // Encode index = 1 in explicit little-endian order.
+    d[0] = 1;
+    d[1] = 0;
+    d[2] = 0;
+    d[3] = 0;
 
     // Copy the bytes of 'seed' to the 'd' array starting from index 4
     std::memcpy(d + sizeof(uint32_t), seed.data(), seed.size());
 
-    // Allocate memory for 'u64' using new
-    std::vector<CryptoPP::byte> data_tweak_key(hmac.DigestSize());
-
     // Calculate the HMAC
+    std::vector<CryptoPP::byte> data_tweak_key(hmac.DigestSize());
     hmac.CalculateDigest(data_tweak_key.data(), d, d.size());
     std::copy(data_tweak_key.begin(), data_tweak_key.begin() + dataKey.size(), tweakKey.begin());
     std::copy(data_tweak_key.begin() + tweakKey.size(),
@@ -189,21 +206,25 @@ void Crypto::PfsGenCryptoKey(std::span<const CryptoPP::byte, 32> ekpfs,
 void Crypto::decryptPFS(std::span<const CryptoPP::byte, 16> dataKey,
                         std::span<const CryptoPP::byte, 16> tweakKey, std::span<const u8> src_image,
                         std::span<CryptoPP::byte> dst_image, u64 sector) {
+    CryptoPP::ECB_Mode<CryptoPP::AES>::Encryption encrypt(tweakKey.data(), tweakKey.size());
+    CryptoPP::ECB_Mode<CryptoPP::AES>::Decryption decrypt(dataKey.data(), dataKey.size());
+
+    const size_t total = std::min(src_image.size(), dst_image.size());
     // Start at 0x10000 to keep the header when decrypting the whole pfs_image.
-    for (int i = 0; i < src_image.size(); i += 0x1000) {
+    for (size_t i = 0; i + 0x1000 <= total; i += 0x1000) {
         const u64 current_sector = sector + (i / 0x1000);
-        CryptoPP::ECB_Mode<CryptoPP::AES>::Encryption encrypt(tweakKey.data(), tweakKey.size());
-        CryptoPP::ECB_Mode<CryptoPP::AES>::Decryption decrypt(dataKey.data(), dataKey.size());
 
         std::array<CryptoPP::byte, 16> tweak{};
         std::array<CryptoPP::byte, 16> encryptedTweak;
         std::array<CryptoPP::byte, 16> xorBuffer;
-        std::memcpy(tweak.data(), &current_sector, sizeof(u64));
+        for (size_t b = 0; b < sizeof(u64); ++b) {
+            tweak[b] = static_cast<CryptoPP::byte>((current_sector >> (b * 8)) & 0xFF);
+        }
 
         // Encrypt the tweak for each sector.
         encrypt.ProcessData(encryptedTweak.data(), tweak.data(), 16);
 
-        for (int plaintextOffset = 0; plaintextOffset < 0x1000; plaintextOffset += 16) {
+        for (size_t plaintextOffset = 0; plaintextOffset < 0x1000; plaintextOffset += 16) {
             xtsXorBlock(xorBuffer.data(), src_image.data() + i + plaintextOffset,
                         encryptedTweak.data());                          // x, c, t
             decrypt.ProcessData(xorBuffer.data(), xorBuffer.data(), 16); // x, x

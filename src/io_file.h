@@ -158,6 +158,9 @@ public:
 
     template <typename T>
     size_t ReadRaw(void* data, size_t size) const {
+        if (!IsOpen() || size == 0) {
+            return 0;
+        }
         return std::fread(data, sizeof(T), size, file);
     }
 
@@ -186,9 +189,10 @@ public:
 
     template <typename T>
     size_t WriteRaw(const void* data, size_t size) const {
-        auto bytes = std::fwrite(data, sizeof(T), size, file);
-        std::fflush(file);
-        return bytes;
+        if (!IsOpen() || size == 0) {
+            return 0;
+        }
+        return std::fwrite(data, sizeof(T), size, file);
     }
 
     template <typename T>

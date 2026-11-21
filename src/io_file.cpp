@@ -163,13 +163,18 @@ IOFile::IOFile(IOFile&& other) noexcept {
     std::swap(file_access_mode, other.file_access_mode);
     std::swap(file_type, other.file_type);
     std::swap(file, other.file);
+    std::swap(file_mapping, other.file_mapping);
 }
 
 IOFile& IOFile::operator=(IOFile&& other) noexcept {
-    std::swap(file_path, other.file_path);
-    std::swap(file_access_mode, other.file_access_mode);
-    std::swap(file_type, other.file_type);
-    std::swap(file, other.file);
+    if (this != &other) {
+        Close();
+        std::swap(file_path, other.file_path);
+        std::swap(file_access_mode, other.file_access_mode);
+        std::swap(file_type, other.file_type);
+        std::swap(file, other.file);
+        std::swap(file_mapping, other.file_mapping);
+    }
     return *this;
 }
 
@@ -361,15 +366,20 @@ u64 IOFile::GetSize() const {
     }
 
     // Flush any unwritten buffered data into the file prior to retrieving the file size.
-    std::fflush(file);
+    if (file_access_mode != FileAccessMode::Read) {
+        std::fflush(file);
+    }
+
+#ifdef _WIN32
+    const __int64 len = _filelengthi64(fileno(file));
+    if (len >= 0) {
+        return static_cast<u64>(len);
+    }
+#endif
 
     std::error_code ec;
-
     const auto file_size = fs::file_size(file_path, ec);
-
     if (ec) {
-        // LOG_ERROR(Common_Filesystem, "Failed to retrieve the file size of path={},
-        // ec_message={}", PathToUTF8String(file_path), ec.message());
         return 0;
     }
 
@@ -406,14 +416,19 @@ s64 IOFile::Tell() const {
 }
 
 u64 GetDirectorySize(const std::filesystem::path& path) {
-    if (!fs::exists(path)) {
+    std::error_code ec;
+    if (!fs::exists(path, ec)) {
         return 0;
     }
 
     u64 total = 0;
-    for (const auto& entry : fs::recursive_directory_iterator(path)) {
-        if (fs::is_regular_file(entry.path())) {
-            total += fs::file_size(entry.path());
+    for (const auto& entry :
+         fs::recursive_directory_iterator(path, fs::directory_options::skip_permission_denied, ec)) {
+        if (entry.is_regular_file(ec)) {
+            const auto sz = entry.file_size(ec);
+            if (!ec) {
+                total += sz;
+            }
         }
     }
     return total;

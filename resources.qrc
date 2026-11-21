@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="styles/app.qss">assets/styles/app.qss</file>
+        <file alias="logo.png">dist/PKGIcon.png</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <file alias="check.png">assets/icons/check.png</file>
+        <file alias="check@2x.png">assets/icons/check@2x.png</file>
+        <file alias="chevron-dark.png">assets/icons/chevron-dark.png</file>
+        <file alias="chevron-dark@2x.png">assets/icons/chevron-dark@2x.png</file>
+        <file alias="chevron-light.png">assets/icons/chevron-light.png</file>
+        <file alias="chevron-light@2x.png">assets/icons/chevron-light@2x.png</file>
+    </qresource>
+</RCC>

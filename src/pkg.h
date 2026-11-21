@@ -5,6 +5,7 @@
 
 #include <array>
 #include <filesystem>
+#include <functional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -14,7 +15,9 @@
 #include "pfs.h"
 #include "types.h"
 
-// #include "trp.h"
+namespace Common::FS {
+class IOFile;
+}
 
 using namespace Common;
 
@@ -109,11 +112,17 @@ public:
     ~PKG();
 
     bool Open(const std::filesystem::path& filepath, std::string& failreason);
-    void ExtractFiles(const int index);
+    bool ExtractFiles(const int index);
     bool Extract(const std::filesystem::path& filepath, const std::filesystem::path& extract,
                  std::string& failreason);
+    bool ExtractToZar(const std::filesystem::path& filepath,
+                      const std::filesystem::path& zarOutputFile,
+                      std::string& failreason,
+                      std::function<void(int current, int total)> progressCb = nullptr,
+                      std::function<bool()> cancelCheck = nullptr);
 
     std::vector<u8> sfo;
+    std::vector<u8> icon0;
 
     u32 GetNumberOfFiles() {
         return fsTable.size();
@@ -152,18 +161,41 @@ public:
          {PKGContentFlag::CUMULATIVE_PATCH, "CUMULATIVE_PATCH"}}};
 
 private:
+    struct OuterEntry {
+        PKGEntry entry;
+        std::string name;
+        bool isNp = false;
+    };
+
+    void ResetOpenState();
+    void ResetExtractState();
+    bool ValidateAndReadHeader(Common::FS::IOFile& file, std::string& failreason);
+    bool ReadOuterAndDecryptKeys(Common::FS::IOFile& file, std::vector<OuterEntry>& outerEntries,
+                                 std::string& failreason);
+    bool InitPfsContext(Common::FS::IOFile& file, std::vector<u8>& pfsc, int& num_blocks,
+                        std::string& failreason);
+    bool ParsePfsMetadata(const std::vector<u8>& pfsc, int num_blocks,
+                          const std::function<void(int rootInode)>& onUrootComplete,
+                          const std::function<bool(const pfs_fs_table& entry, std::string& err)>& onEntry,
+                          std::string& failreason);
+    bool ExtractInodeBlocks(Common::FS::IOFile& pkgFile, u32 inode_number,
+                            std::vector<u8>& pfsc_buf, std::vector<u8>& pfs_dec,
+                            std::vector<char>& decompressedData,
+                            const std::function<bool(std::span<const char>)>& writeChunk,
+                            std::string& failreason);
+
     Crypto crypto;
     // TRP trp;
     u64 pkgSize = 0;
-    char pkgTitleID[9];
-    PKGHeader pkgheader;
+    char pkgTitleID[9]{};
+    PKGHeader pkgheader{};
     std::string pkgFlags;
 
     std::unordered_map<int, std::filesystem::path> extractPaths;
     std::vector<pfs_fs_table> fsTable;
     std::vector<Inode> iNodeBuf;
     std::vector<u64> sectorMap;
-    u64 pfsc_offset;
+    u64 pfsc_offset = 0;
 
     std::array<u8, 32> dk3_;
     std::array<u8, 32> ivKey;

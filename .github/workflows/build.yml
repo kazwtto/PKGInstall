@@ -206,9 +206,11 @@ jobs:
         path: PKGInstall-mac.tar.gz
 
   pre-release:
-    if: github.ref == 'refs/heads/master' && github.repository == 'Muggle345/PKGInstall' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/master' && github.repository == 'kazwtto/PKGInstall' && github.event_name == 'push'
     needs: [get-info, build-windows, build-linux, build-linux-AppImage, build-mac]
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
     - name: Download all artifacts
       uses: actions/download-artifact@v4

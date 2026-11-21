@@ -1,0 +1,537 @@
+/* ------------------------------------------------------------------
+   PKGInstall style sheet.
+   "@Token@" placeholders are replaced at runtime with the colors of the
+   active palette (see src/theme.cpp), so light and dark share one layout.
+   ------------------------------------------------------------------ */
+
+QWidget {
+    font-size: 12px;
+    color: @Text@;
+}
+
+QToolTip {
+    background-color: @SurfaceBg@;
+    color: @Text@;
+    border: 1px solid @CardBorder@;
+    border-radius: 5px;
+    padding: 3px 6px;
+}
+
+QMenu {
+    background-color: @SurfaceBg@;
+    border: 1px solid @CardBorder@;
+    border-radius: 8px;
+    padding: 4px;
+}
+
+QMenu::item {
+    border-radius: 5px;
+    color: @Text@;
+    padding: 5px 14px 5px 14px;
+}
+
+QMenu::item:selected {
+    background-color: @ChipBg@;
+    color: @Text@;
+}
+
+QMenu::item:disabled {
+    color: @Muted@;
+}
+
+QMenu::separator {
+    background-color: @Separator@;
+    height: 1px;
+    margin: 4px 6px;
+}
+
+QMessageBox {
+    background-color: @SurfaceBg@;
+}
+
+QMessageBox QLabel {
+    color: @Text@;
+}
+
+QMessageBox QPushButton {
+    background-color: @ButtonBg@;
+    border: 1px solid @ButtonBorder@;
+    border-radius: 7px;
+    color: @Text@;
+    min-height: 26px;
+    min-width: 70px;
+    padding: 0px 10px;
+}
+
+QMessageBox QPushButton:hover {
+    background-color: @ButtonHover@;
+}
+
+QProgressBar {
+    background-color: @InputBg@;
+    border: 1px solid @InputBorder@;
+    border-radius: 7px;
+    color: @Text@;
+    font-size: 11px;
+    min-height: 16px;
+    text-align: center;
+}
+
+QProgressBar::chunk {
+    background-color: @Accent@;
+    border-radius: 5px;
+    margin: 2px;
+}
+
+/* ---------------------------- window shell ---------------------------- */
+
+QWidget#centralwidget {
+    background: transparent;
+}
+
+QFrame#windowRoot {
+    background-color: @WindowBg@;
+    border: 1px solid @CardBorder@;
+    border-radius: 10px;
+}
+
+/* ----------------------------- title bar ------------------------------ */
+
+QFrame#titleBar {
+    background-color: @SurfaceBg@;
+    border-bottom: 1px solid @Separator@;
+    border-top-left-radius: 9px;
+    border-top-right-radius: 9px;
+}
+
+QLabel#appTitle {
+    color: @Text@;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+QFrame#titleSeparator {
+    background-color: @Separator@;
+    max-width: 1px;
+    min-width: 1px;
+}
+
+QFrame#languagePill {
+    background-color: @SurfaceBg@;
+    border: 1px solid @InputBorder@;
+    border-radius: 8px;
+}
+
+QLabel#languageLabel {
+    color: @Text@;
+    font-size: 11px;
+}
+
+QComboBox#languageCombo {
+    background: transparent;
+    border: none;
+    color: @Text@;
+    font-size: 11px;
+    min-height: 20px;
+    min-width: 84px;
+    padding: 0px;
+}
+
+QComboBox#languageCombo:hover,
+QComboBox#languageCombo:on {
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+}
+
+QComboBox#languageCombo::drop-down {
+    border: none;
+    width: 16px;
+}
+
+QComboBox#languageCombo::down-arrow {
+    image: url("@ChevronUrl@");
+    height: 10px;
+    width: 10px;
+}
+
+QToolButton#preferencesButton,
+QToolButton#minimizeButton,
+QToolButton#closeWindowButton {
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    padding: 5px;
+}
+
+QToolButton#preferencesButton:hover,
+QToolButton#minimizeButton:hover,
+QToolButton#closeWindowButton:hover {
+    background-color: @ButtonHover@;
+}
+
+/* ------------------------------ content ------------------------------- */
+
+QFrame#contentArea {
+    background-color: @WindowBg@;
+}
+
+QFrame#filesCard,
+QFrame#installCard,
+QFrame#optionsCard {
+    background-color: @CardBg@;
+    border: 1px solid @CardBorder@;
+    border-radius: 10px;
+}
+
+QLabel#filesTitle,
+QLabel#installTitle,
+QLabel#optionsTitle {
+    color: @Text@;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+QLabel#pkgLabel,
+QLabel#outputLabel,
+QLabel#dlcLabel {
+    color: @Text@;
+    font-size: 12px;
+    min-width: 150px;
+}
+
+/* keeps the install folder combo aligned with the file inputs above */
+QLabel#folderLabel {
+    color: @Text@;
+    font-size: 12px;
+    min-width: 184px;
+}
+
+QLabel#pkgChip,
+QLabel#outChip,
+QLabel#dlcChip {
+    background-color: @ChipBg@;
+    border-radius: 7px;
+}
+
+/* the file fields are buttons: glyph left, selected path right */
+QPushButton#pkgPicker,
+QPushButton#outputPicker,
+QPushButton#dlcPicker {
+    background-color: @InputBg@;
+    border: 1px solid @InputBorder@;
+    border-radius: 7px;
+    min-height: 26px;
+    outline: none;
+    padding: 0px;
+}
+
+/* only the outline reacts to the mouse: changing the fill as well made the
+   field look like a different (bigger/moved) box when the cursor entered it */
+QPushButton#pkgPicker:hover,
+QPushButton#outputPicker:hover,
+QPushButton#dlcPicker:hover {
+    border: 1px solid @InputFocus@;
+}
+
+QPushButton#pkgPicker:pressed,
+QPushButton#outputPicker:pressed,
+QPushButton#dlcPicker:pressed {
+    background-color: @ButtonPressed@;
+}
+
+QPushButton#pkgPicker:focus,
+QPushButton#outputPicker:focus,
+QPushButton#dlcPicker:focus {
+    border: 1px solid @InputFocus@;
+}
+
+QLabel[pickerPlaceholder="true"] {
+    color: @Placeholder@;
+    font-size: 12px;
+}
+
+QLabel[pickerPlaceholder="false"] {
+    color: @Text@;
+    font-size: 12px;
+}
+
+QComboBox#folderComboBox {
+    background-color: @InputBg@;
+    border: 1px solid @InputBorder@;
+    border-radius: 7px;
+    color: @Text@;
+    min-height: 26px;
+    outline: none;
+    padding: 0px 26px 0px 9px;
+    selection-background-color: @Accent@;
+    selection-color: @OnAccent@;
+}
+
+QComboBox#folderComboBox:hover {
+    border: 1px solid @InputFocus@;
+}
+
+QComboBox#folderComboBox:focus,
+QComboBox#folderComboBox:on {
+    border: 1px solid @InputFocus@;
+}
+
+QComboBox#folderComboBox::drop-down {
+    border: none;
+    width: 22px;
+}
+
+QComboBox#folderComboBox::down-arrow {
+    image: url("@ChevronUrl@");
+    height: 11px;
+    width: 11px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: @SurfaceBg@;
+    border: 1px solid @CardBorder@;
+    border-radius: 7px;
+    color: @Text@;
+    outline: 0;
+    padding: 3px;
+    selection-background-color: @ChipBg@;
+    selection-color: @Text@;
+}
+
+/* ------------------------------ buttons ------------------------------- */
+
+QPushButton#setOutputButton,
+QPushButton#loadConfigButton,
+QPushButton#detectConfigButton,
+QPushButton#saveSettingsButton {
+    background-color: @ButtonBg@;
+    border: 1px solid @ButtonBorder@;
+    border-radius: 7px;
+    color: @Text@;
+    font-size: 12px;
+    min-height: 26px;
+    outline: none;
+    padding: 0px 8px;
+}
+
+QPushButton#setOutputButton:hover,
+QPushButton#loadConfigButton:hover,
+QPushButton#detectConfigButton:hover,
+QPushButton#saveSettingsButton:hover {
+    background-color: @ButtonHover@;
+}
+
+QPushButton#setOutputButton:pressed,
+QPushButton#loadConfigButton:pressed,
+QPushButton#detectConfigButton:pressed,
+QPushButton#saveSettingsButton:pressed {
+    background-color: @ButtonPressed@;
+}
+
+QPushButton:disabled {
+    color: @Placeholder@;
+}
+
+QPushButton#extractButton {
+    background-color: @Accent@;
+    border: 1px solid @Accent@;
+    border-top-left-radius: 7px;
+    border-bottom-left-radius: 7px;
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+    border-right: none;
+    color: @OnAccent@;
+    font-size: 13px;
+    font-weight: 600;
+    min-height: 28px;
+    min-width: 138px;
+    outline: none;
+    padding: 0px 18px;
+}
+
+QPushButton#extractButton:hover {
+    background-color: @AccentHover@;
+    border-color: @AccentHover@;
+}
+
+QPushButton#extractButton:pressed {
+    background-color: @AccentPressed@;
+    border-color: @AccentPressed@;
+}
+
+QPushButton#extractArrowButton {
+    background-color: @Accent@;
+    border: 1px solid @Accent@;
+    border-left: 1px solid rgba(255, 255, 255, 0.35);
+    border-top-right-radius: 7px;
+    border-bottom-right-radius: 7px;
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+    min-height: 28px;
+    max-height: 28px;
+    min-width: 28px;
+    max-width: 28px;
+    padding: 0px;
+    outline: none;
+}
+
+QPushButton#extractArrowButton:hover {
+    background-color: @AccentHover@;
+    border-color: @AccentHover@;
+    border-left: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+QPushButton#extractArrowButton:pressed {
+    background-color: @AccentPressed@;
+    border-color: @AccentPressed@;
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* --------------------------- game info card --------------------------- */
+
+QFrame#gameInfoCard {
+    background-color: @CardBg@;
+    border: 1px solid @CardBorder@;
+    border-radius: 8px;
+}
+
+QLabel#gameIconLabel {
+    border-radius: 6px;
+    background-color: @ButtonBg@;
+}
+
+QLabel#gameTitleLabel {
+    color: @Text@;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+QLabel#gameTitleIdLabel {
+    color: @Accent@;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+QLabel#gameVersionLabel,
+QLabel#gameCategoryLabel,
+QLabel#gameSizeLabel {
+    color: @Subtext@;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* --------------------------- install overlay --------------------------- */
+
+QWidget#installOverlay {
+    background-color: rgba(10, 12, 16, 0.72);
+}
+
+QFrame#overlayCard {
+    background-color: @SurfaceBg@;
+    border: 1px solid @CardBorder@;
+    border-radius: 16px;
+    min-width: 380px;
+    max-width: 440px;
+}
+
+QLabel#overlayIconLabel {
+    border-radius: 10px;
+    background-color: transparent;
+}
+
+QLabel#overlayTitle {
+    color: @Text@;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+QLabel#overlayStatus {
+    color: @Muted@;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+QProgressBar#overlayProgress {
+    background-color: @InputBg@;
+    border: 1px solid @InputBorder@;
+    border-radius: 7px;
+    text-align: center;
+    color: @Text@;
+    font-size: 11px;
+    font-weight: 700;
+    min-height: 20px;
+    max-height: 20px;
+}
+
+QProgressBar#overlayProgress::chunk {
+    background-color: @Accent@;
+    border-radius: 6px;
+}
+
+QLabel#overlayEta {
+    color: @Muted@;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+QPushButton#overlayCancelButton {
+    background-color: @ButtonBg@;
+    border: 1px solid @ButtonBorder@;
+    border-radius: 8px;
+    color: @Text@;
+    font-size: 13px;
+    font-weight: 600;
+    min-height: 32px;
+    max-height: 32px;
+    min-width: 120px;
+    padding: 0px 22px;
+    outline: none;
+}
+
+QPushButton#overlayCancelButton:hover {
+    background-color: rgba(235, 75, 75, 0.18);
+    border-color: rgba(235, 75, 75, 0.50);
+    color: #FF7B7B;
+}
+
+QPushButton#overlayCancelButton:pressed {
+    background-color: rgba(235, 75, 75, 0.28);
+    border-color: rgba(235, 75, 75, 0.65);
+    color: #FFA0A0;
+}
+
+/* ----------------------------- checkbox ------------------------------- */
+
+QCheckBox#separateUpdateCheckBox {
+    color: @Text@;
+    font-size: 12px;
+    padding-left: 30px;
+    spacing: 8px;
+}
+
+QCheckBox#separateUpdateCheckBox::indicator {
+    background-color: @InputBg@;
+    border: 1px solid @InputBorder@;
+    border-radius: 5px;
+    height: 16px;
+    width: 16px;
+}
+
+QCheckBox#separateUpdateCheckBox::indicator:hover {
+    border: 1px solid @Accent@;
+}
+
+QCheckBox#separateUpdateCheckBox::indicator:checked {
+    background-color: @Accent@;
+    border: 1px solid @Accent@;
+    image: url("@CheckUrl@");
+}
+
+/* ------------------------------- footer ------------------------------- */
+
+QFrame#footer {
+    background-color: @SurfaceBg@;
+    border-top: 1px solid @Separator@;
+    border-bottom-left-radius: 9px;
+    border-bottom-right-radius: 9px;
+}

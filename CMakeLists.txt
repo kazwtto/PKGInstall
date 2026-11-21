@@ -11,14 +11,14 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-project(PKGInstall LANGUAGES CXX)
+project(PKGInstall VERSION 1.0.0 LANGUAGES CXX)
 
 if(APPLE)
     enable_language(OBJC)
     set(CMAKE_OSX_DEPLOYMENT_TARGET 14)
 endif()
 
-option(FORCE_UAC "Requires running as Admin on Windows" ON)
+option(FORCE_UAC "Requires running as Admin on Windows" OFF)
 
 # First, determine whether to use CMAKE_OSX_ARCHITECTURES or CMAKE_SYSTEM_PROCESSOR.
 if (APPLE AND CMAKE_OSX_ARCHITECTURES)
@@ -40,7 +40,7 @@ endif()
 # against all the src files. This should be used before making a pull request.
 
 if (CLANG_FORMAT)
-    set(SRCS ${PROJECT_SOURCE_DIR)
+    set(SRCS "${PROJECT_SOURCE_DIR}")
     set(CCOMMENT "Running clang format against all the .h and .cpp files in src/")
     if (WIN32)
         add_custom_target(clang-format
@@ -59,7 +59,7 @@ if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR NOT MSVC)
     find_package(cryptopp 8.9.0 MODULE)
 endif()
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Concurrent)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Concurrent Network LinguistTools)
 find_package(ZLIB 1.3 MODULE)
 find_package(fmt 10.2.0 CONFIG)
 find_package(toml11 4.2.0 CONFIG)
@@ -87,7 +87,23 @@ set(PROJECT_SOURCES
         src/pkg_type.h
         src/psf.cpp
         src/psf.h
+        src/appsettings.cpp
+        src/appsettings.h
+        src/i18n.cpp
+        src/i18n.h
+        src/icons.cpp
+        src/icons.h
+        src/pathpicker.cpp
+        src/pathpicker.h
+        src/path_utils.h
+        src/shadps4config.cpp
+        src/shadps4config.h
+        src/theme.cpp
+        src/theme.h
         src/types.h
+        src/update_checker.cpp
+        src/update_checker.h
+        resources.qrc
         main.cpp
         mainWindow.cpp
         mainWindow.h
@@ -101,16 +117,47 @@ qt_add_executable(PKGInstall
 
 if (WIN32)
     target_sources(PKGInstall PRIVATE dist/PKGInstall.rc)
+    if (MSVC)
+        target_compile_options(PKGInstall PRIVATE /EHsc)
+    endif()
+    if (MSVC AND FORCE_UAC)
+        target_link_options(PKGInstall PRIVATE "/MANIFESTUAC:level='requireAdministrator' uiAccess='false'")
+    endif()
 endif()
 
-target_link_libraries(PKGInstall PRIVATE Qt6::Widgets Qt6::Concurrent)
+# Translations are compiled into the executable as :/i18n/<name>.qm
+qt_add_translations(PKGInstall
+    TS_FILES
+        translations/pkginstall_pt_BR.ts
+)
 
-target_link_libraries(PKGInstall PRIVATE cryptopp::cryptopp ZLIB::ZLIB fmt::fmt toml11::toml11)
+target_link_libraries(PKGInstall PRIVATE Qt6::Widgets Qt6::Concurrent Qt6::Network)
+
+target_link_libraries(PKGInstall PRIVATE cryptopp::cryptopp ZLIB::ZLIB fmt::fmt toml11::toml11 zarchive)
+
+string(TIMESTAMP PKGINSTALL_BUILD_DATE "%Y-%m-%d" UTC)
+set(PKGINSTALL_GIT_HASH "")
+find_package(Git QUIET)
+if (Git_FOUND)
+    execute_process(
+        COMMAND "${GIT_EXECUTABLE}" rev-parse --short HEAD
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        OUTPUT_VARIABLE PKGINSTALL_GIT_HASH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+endif()
+
+target_compile_definitions(PKGInstall PRIVATE
+    PKGINSTALL_VERSION="${PROJECT_VERSION}"
+    PKGINSTALL_BUILD_DATE="${PKGINSTALL_BUILD_DATE}"
+    PKGINSTALL_GIT_HASH="${PKGINSTALL_GIT_HASH}"
+)
 
 set_target_properties(PKGInstall PROPERTIES
     WIN32_EXECUTABLE TRUE
-    ${BUNDLE_ID_OPTION}
-    MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "com.kazwtto.pkginstall"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
     MACOSX_BUNDLE TRUE
     MACOSX_BUNDLE_ICON_FILE "PKGIcon.icns"
 )
@@ -118,9 +165,9 @@ set_target_properties(PKGInstall PROPERTIES
 set_source_files_properties(dist/PKGIcon.icns PROPERTIES
         MACOSX_PACKAGE_LOCATION Resources)
 
-target_include_directories(PKGInstall PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dist)
+target_include_directories(PKGInstall PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/dist)
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    install(FILES "PKGInstall.desktop" DESTINATION "share/applications")
-    install(FILES "PKGIcon.png" DESTINATION "share/icons/hicolor/512x512/apps")
+    install(FILES "dist/PKGInstall.desktop" DESTINATION "share/applications")
+    install(FILES "dist/PKGIcon.png" DESTINATION "share/icons/hicolor/512x512/apps")
 endif()
 

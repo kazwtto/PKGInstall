@@ -18,3 +18,11 @@
 	path = externals/toml11
 	url = https://github.com/ToruNiina/toml11
 	shallow = true
+[submodule "externals/zarchive"]
+	path = externals/zarchive
+	url = https://github.com/shadexternals/ZArchive
+	shallow = true
+[submodule "externals/zstd"]
+	path = externals/zstd
+	url = https://github.com/facebook/zstd
+	shallow = true

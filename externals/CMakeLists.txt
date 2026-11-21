@@ -56,3 +56,21 @@ if (NOT TARGET toml11::toml11)
       endif()
     endif()
 endif()
+
+# zstd
+if (NOT TARGET zstd::zstd AND NOT TARGET libzstd_static)
+    set(ZSTD_BUILD_PROGRAMS OFF CACHE BOOL "" FORCE)
+    set(ZSTD_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(ZSTD_BUILD_SHARED OFF CACHE BOOL "" FORCE)
+    set(ZSTD_BUILD_STATIC ON CACHE BOOL "" FORCE)
+    add_subdirectory(zstd/build/cmake zstd EXCLUDE_FROM_ALL)
+    if (TARGET libzstd_static AND NOT TARGET zstd::zstd)
+        add_library(zstd::zstd ALIAS libzstd_static)
+    endif()
+endif()
+
+# zarchive
+if (NOT TARGET zarchive AND NOT TARGET ZArchive::zarchive)
+    set(BUILD_STATIC_TOOL OFF CACHE BOOL "" FORCE)
+    add_subdirectory(zarchive EXCLUDE_FROM_ALL)
+endif()
